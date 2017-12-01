@@ -1,8 +1,10 @@
 package us.originally.lazadacrawler;
 
+import android.annotation.SuppressLint;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -182,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
 
                     Log.e("Main", finalWebUrl);
-                    crawler.startCrawlerTask(finalWebUrl, true, false);
+                    crawler.startCrawlerTask(finalWebUrl, true, false, false);
                     startButton.setEnabled(false);
                     imgButtonIcon.setImageResource(android.R.drawable.ic_media_pause);
                     startButton.setText(R.string.txt_is_running);
@@ -235,20 +237,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void stopCrawling() {
         if (crawlingRunning) {
             crawler.stopCrawlerTasks();
-            crawlingInfo.setVisibility(View.INVISIBLE);
-            startButton.setEnabled(true);
-            startButton.setVisibility(View.VISIBLE);
-            imgButtonIcon.setImageResource(android.R.drawable.ic_media_play);
-            startButton.setText(getResources().getString(R.string.txt_start));
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    crawlingInfo.setVisibility(View.INVISIBLE);
+                    startButton.setEnabled(true);
+                    startButton.setVisibility(View.VISIBLE);
+                    imgButtonIcon.setImageResource(android.R.drawable.ic_media_play);
+                    startButton.setText(getResources().getString(R.string.txt_start));
+                }
+            });
+
             crawlingRunning = false;
+
+
             if (crawledUrlCount > 0)
-                Toast.makeText(getApplicationContext(),
-                        printCrawledEntriesFromDb() + "pages crawled",
-                        Toast.LENGTH_SHORT).show();
+                printCrawledEntriesFromDb();
+
             detailUrls = getCrawledLinkFromDb();
 
-            crawledUrlCount = 0;
-            progressText.setText("");
 
         }
 
@@ -259,28 +266,50 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      *
      * @return number of rows saved in crawling database
      */
-    protected int printCrawledEntriesFromDb() {
+    protected void printCrawledEntriesFromDb() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int count = 0;
 
-        int count = 0;
-        CrawlerDB mCrawlerDB = new CrawlerDB(this);
-        SQLiteDatabase db = mCrawlerDB.getReadableDatabase();
+                CrawlerDB mCrawlerDB = new CrawlerDB(MainActivity.this);
+                SQLiteDatabase db = mCrawlerDB.getReadableDatabase();
 
-        Cursor mCursor = db.query(CrawlerDB.TABLE_NAME, null, null, null, null,
-                null, null);
-        if (mCursor != null && mCursor.getCount() > 0) {
-            count = mCursor.getCount();
-            mCursor.moveToFirst();
-            int columnIndex = mCursor
-                    .getColumnIndex(CrawlerDB.COLUMNS_NAME.CRAWLED_URL);
-            for (int i = 0; i < count - 1; i++) {
-                Log.d("AndroidSRC_Crawler",
-                        "Crawled Url " + mCursor.getString(columnIndex));
-                mCursor.moveToNext();
+                Cursor mCursor = db.query(CrawlerDB.TABLE_NAME, null, null, null, null,
+                        null, null);
+                if (mCursor != null && mCursor.getCount() > 0) {
+                    count = mCursor.getCount();
+                    mCursor.moveToFirst();
+                    int columnIndex = mCursor
+                            .getColumnIndex(CrawlerDB.COLUMNS_NAME.CRAWLED_URL);
+                    for (int i = 0; i < count - 1; i++) {
+                        Log.d("AndroidSRC_Crawler",
+                                "Crawled Url " + mCursor.getString(columnIndex));
+                        mCursor.moveToNext();
+                    }
+                }
+                mCountFromDbHandler.sendEmptyMessage(count);
             }
-        }
+        }).start();
 
-        return count;
+
     }
+
+
+    Handler mCountFromDbHandler = new Handler(Looper.getMainLooper()) {
+        public void handleMessage(int msg) {
+            int count = msg;
+
+            Toast.makeText(MainActivity.this,
+                    count + "pages crawled",
+                    Toast.LENGTH_SHORT).show();
+            crawledUrlCount = 0;
+            progressText.setText("");
+            // something to do.
+
+        }
+    };
+
 
     protected ArrayList<String> getCrawledLinkFromDb() {
         ArrayList<String> returnLinks = new ArrayList<>();

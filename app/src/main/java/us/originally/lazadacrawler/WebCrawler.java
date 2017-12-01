@@ -70,7 +70,7 @@ public class WebCrawler {
      * @param Url       - Url to crawl
      * @param isRootUrl
      */
-    public void startCrawlerTask(String Url, boolean isRootUrl, boolean isDetailCrawl) {
+    public void startCrawlerTask(String Url, boolean isRootUrl, boolean isDetailCrawl, boolean isCrawlingComplete) {
         // If it's root URl, we clear previous lists and DB table content
         if (isRootUrl) {
             crawledURL.clear();
@@ -80,7 +80,7 @@ public class WebCrawler {
         }
         // If ThreadPoolExecuter is not shutting down, add runnable to workQueue
         if (!mManager.isShuttingDown()) {
-            CrawlerRunnable mTask = new CrawlerRunnable(callback, Url, isDetailCrawl);
+            CrawlerRunnable mTask = new CrawlerRunnable(callback, Url, isDetailCrawl, isCrawlingComplete);
             mManager.addToCrawlingQueue(mTask);
         }
     }
@@ -102,15 +102,22 @@ public class WebCrawler {
         CrawlingCallback mCallback;
         String mUrl;
         boolean isDetailCrawl;
+        boolean isCrawlingComplete;
 
-        public CrawlerRunnable(CrawlingCallback callback, String Url, boolean isDetailCrawl) {
+        public CrawlerRunnable(CrawlingCallback callback, String Url, boolean isDetailCrawl, boolean isCrawlingComplete) {
             this.mCallback = callback;
             this.mUrl = Url;
             this.isDetailCrawl = isDetailCrawl;
+            this.isCrawlingComplete = isCrawlingComplete;
         }
 
         @Override
         public void run() {
+            if (isCrawlingComplete) {
+                mCallback.onCrawlingCompleted();
+                return;
+            }
+
             if (!isDetailCrawl) {
                 getLinksSearchPage(mUrl);
             }
@@ -130,7 +137,7 @@ public class WebCrawler {
             String pageContent = retreiveHtmlContent(url);
 
             if (!TextUtils.isEmpty(pageContent.toString())) {
-
+                insertIntoCrawlerDB(url, pageContent);
                 synchronized (lock) {
                     crawledURL.add(url);
                 }
@@ -280,9 +287,12 @@ public class WebCrawler {
                 if (uncrawledURL != null && uncrawledURL.size() > 0) {
                     int availableTasks = mManager.getUnusedPoolSize();
                     while (availableTasks > 0 && !uncrawledURL.isEmpty()) {
-                        startCrawlerTask(uncrawledURL.remove(), false, true);
+                        startCrawlerTask(uncrawledURL.remove(), false, true, false);
                         availableTasks--;
                     }
+                    if (uncrawledURL.size() == 0)
+                        startCrawlerTask(null, false, false, true);
+
                 }
             }
 
