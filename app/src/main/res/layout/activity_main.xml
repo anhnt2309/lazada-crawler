@@ -1,0 +1,167 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/crawlingInfo"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:id="@+id/animation_view"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                app:lottie_autoPlay="true"
+                app:lottie_fileName="world_locations_2.json"
+                app:lottie_loop="true" />
+
+            <TextView
+                android:id="@+id/progressText"
+                style="@style/text_title"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:gravity="center">
+                <Button
+                    style="@style/Base.Widget.AppCompat.Button.Borderless"
+                    android:id="@+id/stop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:onClick="onClick"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:text="Dừng" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+
+        <us.originally.lazadacrawler.custom.StereoView
+            android:id="@+id/stereoView"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp"
+            android:layout_marginTop="50dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/bg_white"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="center_vertical"
+                android:paddingLeft="20dp">
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:background="@drawable/ic_url" />
+
+                <EditText
+                    android:id="@+id/webUrl"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_weight="10"
+                    android:background="@null"
+                    android:hint="Nhập địa chỉ cần crawl"
+                    android:singleLine="true"
+                    android:textColorHint="@color/font_gray"
+                    android:textSize="18sp" />
+
+                <us.originally.lazadacrawler.custom.RippleView
+                    android:id="@+id/rv_username"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:paddingLeft="10dp"
+                    app:normal="@drawable/icon_next_gray"
+                    app:pressed="@drawable/icon_next" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/bg_white"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingLeft="20dp">
+
+                <ImageView
+                    android:id="@+id/img_button_action"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:src="@android:drawable/ic_media_play" />
+
+                <Button
+                    android:id="@+id/start"
+                    style="@style/TextAppearance.AppCompat.Widget.Button.Borderless.Colored"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_weight="10"
+                    android:background="@null"
+                    android:gravity="left|center"
+                    android:hint="@string/txt_start"
+                    android:singleLine="true"
+                    android:textColorHint="@color/font_gray" />
+
+                <us.originally.lazadacrawler.custom.RippleView
+                    android:id="@+id/rv_return"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:rotation="90"
+                    app:normal="@drawable/icon_next"
+                    app:pressed="@drawable/icon_next" />
+            </LinearLayout>
+        </us.originally.lazadacrawler.custom.StereoView>
+
+        <TextView
+            android:id="@+id/tv_url_text"
+            style="@style/text_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="URL đã nhập"
+            android:textSize="15sp"/>
+
+        <TextView
+            android:id="@+id/tv_inputted_url"
+            style="@style/text_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="0dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:text=""
+            android:textSize="20sp"/>
+    </LinearLayout>
+
+
+</LinearLayout>

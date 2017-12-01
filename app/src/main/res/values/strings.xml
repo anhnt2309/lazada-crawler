@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Lazada Crawler</string>
+
+    <string name="empty_string"></string>
+    <string name="txt_is_running">Đang chạy</string>
+    <string name="txt_start">Bắt đầu chạy</string>
+</resources>
