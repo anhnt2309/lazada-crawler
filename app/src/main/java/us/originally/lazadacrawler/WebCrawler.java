@@ -7,22 +7,33 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
 
+import com.google.gson.Gson;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.interfaces.DSAKey;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import us.originally.lazadacrawler.models.Commnent;
+import us.originally.lazadacrawler.models.Product;
+import us.originally.lazadacrawler.models.ProductRating;
+import us.originally.lazadacrawler.models.Saler;
 
 public class WebCrawler {
 
@@ -90,7 +101,7 @@ public class WebCrawler {
      * API to shutdown ThreadPoolExecuter
      */
     public void stopCrawlerTasks() {
-        mManager.cancelAllRunnable();
+//        mManager.cancelAllRunnable();
     }
 
     /**
@@ -137,7 +148,7 @@ public class WebCrawler {
             String pageContent = retreiveHtmlContent(url);
 
             if (!TextUtils.isEmpty(pageContent.toString())) {
-                insertIntoCrawlerDB(url, pageContent);
+//                insertIntoCrawlerDB(url, pageContent);
                 synchronized (lock) {
                     crawledURL.add(url);
                 }
@@ -180,31 +191,154 @@ public class WebCrawler {
         public void getProductInfo(String url) {
             String pageContent = retreiveHtmlContent(url);
             if (!TextUtils.isEmpty(pageContent.toString())) {
-                insertIntoCrawlerDB(url, pageContent);
+
                 synchronized (lock) {
                     crawledURL.add(url);
                 }
                 mCallback.onPageCrawlingCompleted();
-            } else {
-                mCallback.onPageCrawlingFailed(url, -1);
             }
+//            else {
+//                mCallback.onPageCrawlingFailed(url, -2);
+//                return;
+//            }
 
 
             if (!TextUtils.isEmpty(pageContent.toString())) {
                 //TODO: get model array from cache
 
                 //Todo: after get model array start crawl and construc the model then add to array and save back to cache
+
                 Document doc = Jsoup.parse(pageContent.toString());
-                Elements searchProductLinks = doc.select(".merchandise__link");
+
+                //get saler info
+                Saler saler = getSaler(doc);
+                //get product Rating
+                ProductRating productRating = getProductRating(doc);
+
+                //get ProductDetail
+                ArrayList<Commnent> commnents = new ArrayList<>();
+                Product product = getProductDetail(doc, saler, productRating, commnents);
+                String productString = new Gson().toJson(product);
+
+                insertIntoCrawlerDB(url, productString);
 
             }
 
 
         }
 
+        private Product getProductDetail(Document doc, Saler saler, ProductRating productRating, ArrayList<Commnent> commnents) {
+            Elements productDoc = doc.select("#prd-detail-page");
+            String productName = productDoc.select("#prod_title").text();
+
+            Elements brandDoc = productDoc.select("#prod_brand");
+            Elements brandDeatilDoc = brandDoc.select(".prod_header_brand_action");
+            Elements brandDetail = brandDeatilDoc.size() > 0 ? brandDeatilDoc.get(0).select("a[href]") : new Elements();
+            String brandName = brandDetail.text();
+            String brandUrl = brandDetail.size() > 0 ? brandDetail.get(0).attr("href") : "";
+
+            Elements proContentDoc = productDoc.select(".prod_content");
+            Elements proContentArray = proContentDoc.select("li");
+            ArrayList<String> producDetails = new ArrayList<>();
+            for (Element element : proContentArray) {
+                producDetails.add(element.text());
+            }
+            Elements productImageDoc = productDoc.select(".itm-imageWrapper");
+            Elements productImage = productImageDoc.select("img");
+            ArrayList<String> producImageUrls = new ArrayList<>();
+            for (Element element : productImage) {
+                String elementUrl = element.attr("src");
+                producImageUrls.add(elementUrl);
+
+            }
+
+            Elements productPriceDoc = doc.select("#product-price-box");
+            Elements currenPriceDoc = productPriceDoc.select("#special_price_box");
+            String currenPrice = currenPriceDoc.text();
+            String currency = productPriceDoc.select("#special_currency_box").text();
+            Elements oldPriceDoc = productPriceDoc.select(".price_erase");
+            String oldPrice = oldPriceDoc.select("#price_box").text();
+            String percenOff = productPriceDoc.select(".price_highlight").text();
+            Elements installmentDoc = productPriceDoc.select(".manual_installments_buy");
+            String installMent = installmentDoc.select("a").text();
+
+            Elements warrantyDoc = doc.select(".prod-warranty");
+            String warrantyTime = warrantyDoc.select(".prod-warranty__term").text();
+            String warrantyType = warrantyDoc.select(".prod-warranty__type").text();
+            String warrantyDetail = warrantyDoc.select(".warranty-popup__copy").text();
+
+
+            Elements deliveryDoc = doc.select(".delivery-info");
+            String paymentMethod = deliveryDoc.select(".cash-on-delivery__message").text();
+            String paybackPolicy = deliveryDoc.select(".popup-tooltips__main-title").size() > 0 ? deliveryDoc.select(".popup-tooltips__main-title").get(0).text() : "";
+            String payback_subtitle = deliveryDoc.select(".popup-tooltips__subtitle").text();
+
+            Elements paybackDetailDoc = doc.select(".sellerreturn7dayswithchangeofmind-tooltip-cms");
+            String payback_detail = paybackDetailDoc.select(".sellerreturn7dayswithchangeofmind-tooltipcms__description").text();
+            String product_included = doc.select(".inbox__item").text();
+
+
+            Product product = new Product(productName, brandName, brandUrl, producDetails, producImageUrls,
+                    currenPrice, oldPrice, currency, percenOff, installMent, warrantyTime, warrantyType,
+                    warrantyDetail, paymentMethod, paybackPolicy, payback_detail, payback_subtitle, product_included,
+                    saler, productRating, commnents);
+
+            return product;
+        }
+
+        private Saler getSaler(Document doc) {
+            Elements salerDoc = doc.select(".seller-details");
+            Elements salerNameDoc = salerDoc.select(".basic-info__name");
+            String salerName = salerNameDoc.text();
+            String salerUrl = salerNameDoc.attr("href");
+
+            String salerRate = salerDoc.select(".c-positive-seller-ratings").text();
+            String salerTime = salerDoc.select(".c-time-on-lazada__value").text();
+            String salerTimeUnit = salerDoc.select(".c-time-on-lazada__unit").text();
+            Elements salerScaleDoc = salerDoc.select(".c-seller-size");
+            Elements salerSaleNumber = salerScaleDoc.select(".seller-size-icon__bar_painted");
+            int salerScale = salerSaleNumber.size();
+            Saler saler = new Saler(salerName, salerRate, salerTime, salerTimeUnit, salerScale, salerUrl);
+            return saler;
+        }
+
+        private ProductRating getProductRating(Document doc) {
+            Elements ratingDoc = doc.select(".c-rating-total");
+            Elements overallRatingDoc = ratingDoc.select(".c-rating-total__text-rating-average");
+            String overallRating = overallRatingDoc.text();
+
+            Elements ratingAndCommentDoc = ratingDoc.select(".c-rating-total__text-total-review");
+            String numOfRateAndCommnent = ratingAndCommentDoc.text();
+            String num5star = "";
+            String num4star = "";
+            String num3star = "";
+            String num2star = "";
+            String num1star = "";
+
+
+            Elements ratingCount = ratingDoc.select(".c-rating-bar-list__count");
+            for (int i = 0; i < ratingCount.size(); i++) {
+                if (i == 0)
+                    num5star = ratingCount.get(i).text();
+                if (i == 1)
+                    num4star = ratingCount.get(i).text();
+                if (i == 2)
+                    num3star = ratingCount.get(i).text();
+                if (i == 3)
+                    num2star = ratingCount.get(i).text();
+                if (i == 4)
+                    num1star = ratingCount.get(i).text();
+            }
+            ProductRating productRating = new ProductRating(overallRating, numOfRateAndCommnent,
+                    num5star, num4star, num3star, num2star, num1star);
+            return productRating;
+
+        }
+
 
         private String retreiveHtmlContent(String Url) {
             URL httpUrl = null;
+            HttpURLConnection conn = null;
             try {
                 httpUrl = new URL(Url);
             } catch (MalformedURLException e) {
@@ -215,10 +349,16 @@ public class WebCrawler {
             StringBuilder pageContent = new StringBuilder();
             try {
                 if (httpUrl != null) {
-                    HttpURLConnection conn = (HttpURLConnection) httpUrl
+
+                    conn = (HttpURLConnection) httpUrl
                             .openConnection();
-                    conn.setConnectTimeout(5000);
-                    conn.setReadTimeout(5000);
+                    conn.setConnectTimeout(Integer.MAX_VALUE);
+                    conn.setReadTimeout(25000);
+                    conn.setUseCaches(false);
+                    conn.setDoInput(true);
+                    conn.setDoOutput(true);
+
+
                     responseCode = conn.getResponseCode();
                     if (responseCode != SC_OK) {
                         throw new IllegalAccessException(
@@ -230,14 +370,20 @@ public class WebCrawler {
                     while ((line = br.readLine()) != null) {
                         pageContent.append(line);
                     }
+                    br.close();
                 }
 
             } catch (IOException e) {
                 e.printStackTrace();
-                mCallback.onPageCrawlingFailed(Url, -1);
+                mCallback.onPageCrawlingFailed(Url, -3);
+                return "";
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
                 mCallback.onPageCrawlingFailed(Url, responseCode);
+                return "";
+            } finally {
+                if (conn != null)
+                    conn.disconnect();
             }
 
             return pageContent.toString();
@@ -250,11 +396,13 @@ public class WebCrawler {
      * API to clear previous content of crawler DB table
      */
     public void clearDB() {
+        SQLiteDatabase db = mCrawlerDB.getWritableDatabase();
         try {
-            SQLiteDatabase db = mCrawlerDB.getWritableDatabase();
             db.delete(CrawlerDB.TABLE_NAME, null, null);
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            db.close();
         }
     }
 
@@ -270,11 +418,14 @@ public class WebCrawler {
             return;
 
         SQLiteDatabase db = mCrawlerDB.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(CrawlerDB.COLUMNS_NAME.CRAWLED_URL, mUrl);
-        values.put(CrawlerDB.COLUMNS_NAME.CRAWLED_PAGE_CONTENT, result);
+        try {
+            ContentValues values = new ContentValues();
+            values.put(CrawlerDB.COLUMNS_NAME.CRAWLED_URL, mUrl);
+            values.put(CrawlerDB.COLUMNS_NAME.CRAWLED_PAGE_CONTENT, result);
+            db.insert(CrawlerDB.TABLE_NAME, null, values);
+        } finally {
 
-        db.insert(CrawlerDB.TABLE_NAME, null, values);
+        }
     }
 
     /**
