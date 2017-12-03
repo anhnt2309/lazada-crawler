@@ -6,6 +6,7 @@
     android:orientation="vertical">
 
 
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -49,7 +50,7 @@
                     android:onClick="onClick"
                     android:textSize="20sp"
                     android:textStyle="bold"
-                    android:text="Dừng" />
+                    android:text="@string/txt_stop" />
             </LinearLayout>
 
         </LinearLayout>
@@ -66,13 +67,14 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/bg_white"
+                android:background="@drawable/shadow_bg"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
                 android:gravity="center_vertical"
                 android:paddingLeft="5dp">
 
                 <ImageView
+                    android:id="@+id/img_url"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
@@ -86,6 +88,8 @@
                     android:layout_marginLeft="10dp"
                     android:layout_weight="10"
                     android:background="@null"
+                    android:allowUndo="true"
+                    android:imeOptions="actionDone"
                     android:hint="Nhập địa chỉ cần crawl"
                     android:singleLine="true"
                     android:textColorHint="@color/font_gray"
@@ -97,15 +101,15 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="2"
                     android:paddingLeft="10dp"
-                    app:normal="@drawable/icon_next_gray"
-                    app:pressed="@drawable/icon_next" />
+                    app:normal="@drawable/ic_done_gray"
+                    app:pressed="@drawable/ic_done" />
 
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/bg_white"
+                android:background="@drawable/shadow_bg"
                 android:focusable="true"
                 android:focusableInTouchMode="true"
                 android:gravity="center"
@@ -130,7 +134,7 @@
                     android:gravity="left|center"
                     android:hint="@string/txt_start"
                     android:singleLine="true"
-                    android:textColorHint="@color/font_gray" />
+                    android:textColorHint="@android:color/black" />
 
                 <us.originally.lazadacrawler.custom.RippleView
                     android:id="@+id/rv_return"
@@ -142,6 +146,38 @@
                     app:pressed="@drawable/icon_next" />
             </LinearLayout>
         </us.originally.lazadacrawler.custom.StereoView>
+
+        <LinearLayout
+            android:id="@+id/btnPaste"
+            android:layout_width="wrap_content"
+            android:layout_height="60dp"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:gravity="center_horizontal"
+            android:background="@color/colorPrimary">
+            <View
+                android:layout_width="0dp"
+                android:layout_weight="5"
+                android:layout_height="match_parent"/>
+            <us.originally.lazadacrawler.custom.RippleView
+                android:id="@+id/rv_paste"
+                android:layout_width="0dp"
+                android:layout_weight="3"
+                android:layout_height="wrap_content"
+                app:normal="@drawable/ic_clipboard2"
+                app:pressed="@drawable/ic_clipboard2"/>
+
+            <TextView
+                style="@style/text_subtitle"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+               android:layout_marginLeft="0dp"
+                android:layout_marginBottom="0dp"
+                android:layout_weight="10"
+                android:gravity="left|center_vertical"
+                android:text="Dán từ clipboard"
+                android:textSize="15sp" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tv_url_text"
