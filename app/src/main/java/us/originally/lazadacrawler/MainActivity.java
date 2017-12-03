@@ -5,6 +5,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
@@ -12,6 +14,8 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -19,12 +23,18 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
+import com.google.gson.Gson;
+
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import us.originally.lazadacrawler.custom.RippleView;
 import us.originally.lazadacrawler.custom.StereoView;
+import us.originally.lazadacrawler.manager.CustomClipboardManager;
+import us.originally.lazadacrawler.models.Product;
 import us.originally.lazadacrawler.utils.LogUtil;
 import us.originally.lazadacrawler.utils.ToastUtil;
 
@@ -53,6 +63,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private TextView tvUrlText;
     private StereoView stereoView;
     private ImageView imgButtonIcon;
+    private ImageView imgClearUrl;
+    private LinearLayout btnPaste;
+    private RippleView rvPaste;
     private int translateY;
     private ArrayList<String> detailUrls;
 
@@ -79,11 +92,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void toNext(int curScreen) {
-                LogUtil.m("cur Screen " + curScreen);
+                LogUtil.m("Cur Screen " + curScreen);
             }
         });
 
         crawler = new WebCrawler(this, mCallback);
+        autoPasteIfValid();
     }
 
     private void initUI() {
@@ -94,6 +108,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         startButton = (Button) findViewById(R.id.start);
         imgButtonIcon = findViewById(R.id.img_button_action);
+        imgClearUrl = findViewById(R.id.img_url);
+        btnPaste = findViewById(R.id.btnPaste);
+        rvPaste = findViewById(R.id.rv_paste);
 
         rvUsername = (RippleView) findViewById(R.id.rv_username);
         rvReturn = (RippleView) findViewById(R.id.rv_return);
@@ -116,8 +133,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void afterTextChanged(Editable editable) {
                 if (editable.toString().isEmpty()) {
                     tvUrlText.setVisibility(View.INVISIBLE);
+                    tvInputtedUrl.setVisibility(View.INVISIBLE);
+                    return;
                 }
                 tvUrlText.setVisibility(View.VISIBLE);
+                tvInputtedUrl.setVisibility(View.VISIBLE);
                 String url = resolveUrl(editable.toString(), false);
                 tvInputtedUrl.setText(url);
             }
@@ -125,9 +145,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         startButton.setOnClickListener(this);
         rvUsername.setOnClickListener(this);
         rvReturn.setOnClickListener(this);
-
+        imgClearUrl.setOnClickListener(this);
+        rvPaste.setOnClickListener(this);
+        btnPaste.setOnClickListener(this);
+        imgButtonIcon.setOnClickListener(this);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        autoPasteIfValid();
+    }
 
     /**
      * callback for crawling events
@@ -148,9 +176,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         @Override
-        public void onPageCrawlingFailed(String Url, int errorCode) {
+        public void onPageCrawlingFailed(final String Url, final int errorCode) {
             // TODO Auto-generated method stub
-
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ToastUtil.showInfo(MainActivity.this, "Crawling is failed with this url " + Url + " with response code: " + errorCode);
+                    Log.e("Crawling failed ", "Crawling is failed with this url " + Url + " with response code: " + errorCode);
+                }
+            });
         }
 
         @Override
@@ -169,17 +203,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int viewId = v.getId();
         final String webUrl = urlInputView.getText().toString();
         switch (viewId) {
+            case R.id.img_button_action:
+                startButton.callOnClick();
+                break;
+            case R.id.btnPaste:
+                rvPaste.callOnClick();
+
+                break;
+            case R.id.rv_paste:
+                rvPaste.setiRippleAnimListener(new RippleView.IRippleAnimListener() {
+                    @Override
+                    public void onComplete(View view) {
+                        onBtnPasteClicked(true);
+                    }
+                });
+                break;
+            case R.id.img_url:
+                urlInputView.setText("");
+                break;
             case R.id.start:
                 if (TextUtils.isEmpty(webUrl)) {
-                    Toast.makeText(getApplicationContext(), "Please input web Url",
+                    Toast.makeText(getApplicationContext(), R.string.txt_url_cannot_be_null,
                             Toast.LENGTH_SHORT).show();
-                    stereoView.toPre();
+                    stereoView.toNext();
                 } else {
                     crawlingRunning = true;
                     String finalWebUrl = resolveUrl(webUrl, true);
                     if (finalWebUrl.isEmpty()) {
                         crawlingRunning = false;
-                        stereoView.toPre();
+                        stereoView.toNext();
                         return;
                     }
 
@@ -189,27 +241,49 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     imgButtonIcon.setImageResource(android.R.drawable.ic_media_pause);
                     startButton.setText(R.string.txt_is_running);
                     crawlingInfo.setVisibility(View.VISIBLE);
+                    crawlingInfo.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, android.R.anim.fade_in));
                     // Send delayed message to handler for stopping crawling
                     handler.sendEmptyMessageDelayed(MSG_STOP_CRAWLING,
                             CRAWLING_RUNNING_TIME);
                 }
                 break;
             case R.id.stop:
-                // remove any scheduled messages if user stopped crawling by
-                // clicking stop button
-                handler.removeMessages(MSG_STOP_CRAWLING);
-                stopCrawling();
+                new MaterialDialog.Builder(this)
+                        .title(R.string.txt_stop)
+                        .content(R.string.cancel_promt)
+                        .positiveText(R.string.agree)
+                        .negativeText(R.string.cancel)
+                        .onNegative(new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                dialog.dismiss();
+                            }
+                        })
+                        .onPositive(new MaterialDialog.SingleButtonCallback() {
+                            @Override
+                            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                                // remove any scheduled messages if user stopped crawling by
+                                // clicking stop button
+                                handler.removeMessages(MSG_STOP_CRAWLING);
+                                stopCrawling();
+                                dialog.dismiss();
+                            }
+                        })
+                        .positiveColor(getResources().getColor(R.color.colorPrimaryDark))
+                        .negativeColor(getResources().getColor(R.color.colorPrimaryDark))
+                        .show();
+
                 break;
             case R.id.rv_username:
                 rvUsername.setiRippleAnimListener(new RippleView.IRippleAnimListener() {
                     @Override
                     public void onComplete(View view) {
                         if (TextUtils.isEmpty(webUrl)) {
-                            Toast.makeText(getApplicationContext(), "Please input web Url",
+                            Toast.makeText(getApplicationContext(), R.string.txt_url_cannot_be_null,
                                     Toast.LENGTH_SHORT).show();
                             return;
                         }
-                        stereoView.toNext();
+                        stereoView.toPre();
                     }
                 });
                 break;
@@ -240,11 +314,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    crawlingInfo.setVisibility(View.INVISIBLE);
+
                     startButton.setEnabled(true);
                     startButton.setVisibility(View.VISIBLE);
                     imgButtonIcon.setImageResource(android.R.drawable.ic_media_play);
                     startButton.setText(getResources().getString(R.string.txt_start));
+                    startButton.setTextColor(getResources().getColor(android.R.color.black));
+                    crawlingInfo.setVisibility(View.GONE);
+                    crawlingInfo.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, android.R.anim.fade_out));
                 }
             });
 
@@ -255,7 +332,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 printCrawledEntriesFromDb();
 
             detailUrls = getCrawledLinkFromDb();
+            ArrayList<Product> products = new ArrayList<>();
+            for (String model : detailUrls) {
+                Product product = new Gson().fromJson(model, Product.class);
+                products.add(product);
+            }
 
+            Log.e("x", "" + products.size());
 
         }
 
@@ -282,13 +365,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     mCursor.moveToFirst();
                     int columnIndex = mCursor
                             .getColumnIndex(CrawlerDB.COLUMNS_NAME.CRAWLED_URL);
-                    for (int i = 0; i < count - 1; i++) {
-                        Log.d("AndroidSRC_Crawler",
-                                "Crawled Url " + mCursor.getString(columnIndex));
-                        mCursor.moveToNext();
+                    try {
+                        for (int i = 0; i < count - 1; i++) {
+                            Log.d("AndroidSRC_Crawler",
+                                    "Crawled Url " + mCursor.getString(columnIndex));
+                            mCursor.moveToNext();
+                        }
+                    } finally {
+                        mCursor.close();
+                        db.close();
                     }
                 }
-                mCountFromDbHandler.sendEmptyMessage(count);
+                Message message = new Message();
+                message.what = count;
+
+                mCountFromDbHandler.sendMessage(message);
             }
         }).start();
 
@@ -297,15 +388,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     Handler mCountFromDbHandler = new Handler(Looper.getMainLooper()) {
-        public void handleMessage(int msg) {
-            int count = msg;
+        public void handleMessage(Message msg) {
+            int count = msg.what;
 
             Toast.makeText(MainActivity.this,
-                    count + "pages crawled",
+                    "Đã lưu " + count + " trang",
                     Toast.LENGTH_SHORT).show();
             crawledUrlCount = 0;
             progressText.setText("");
-            // something to do.
 
         }
     };
@@ -324,11 +414,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mCursor.moveToFirst();
             int columnIndex = mCursor
                     .getColumnIndex(CrawlerDB.COLUMNS_NAME.CRAWLED_URL);
-            for (int i = 0; i < count - 1; i++) {
-                Log.d("AndroidSRC_Crawler",
-                        "Crawled Url " + mCursor.getString(columnIndex));
-                returnLinks.add(mCursor.getString(columnIndex));
-                mCursor.moveToNext();
+            int productIndex = mCursor.getColumnIndex(CrawlerDB.COLUMNS_NAME.CRAWLED_PAGE_CONTENT);
+            try {
+                for (int i = 0; i < count - 1; i++) {
+                    Log.d("AndroidSRC_Crawler",
+                            "Crawled Url " + mCursor.getString(columnIndex));
+                    returnLinks.add(mCursor.getString(productIndex));
+
+                    mCursor.moveToNext();
+                }
+            } finally {
+                mCursor.close();
+                db.close();
             }
         }
 
@@ -339,43 +436,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // Clipboard
     //----------------------------------------------------------------------------------------------
 
-//    private void autoPasteIfValid() {
-//        if (this.tvPasteInstructions.getVisibility() == View.VISIBLE)
-//            onBtnPasteClicked(false);
-//    }
-//
-//    private void onBtnPasteClicked(boolean userInitiated) {
-//        CustomClipboardManager customClipboardManager = new CustomClipboardManager();
-//        String value = customClipboardManager.readFromClipboard(this);
-//        setCodeInput(value, userInitiated);
-//    }
-//
-//    private void setCodeInput(String value, boolean userInitiated) {
-//        if (value.startsWith(CodeInfo.CODE_IR_PREFIX)) {
-//            this.tvPasteInstructions.setVisibility(View.GONE);
-//            this.grpPronto.setVisibility(View.GONE);
-//            this.grpBroadlink.setVisibility(View.VISIBLE);
-//            this.tvCodeValueBroadlink.setText(value);
-//            return;
-//        }
-//
-//        if (value.startsWith(CodeInfo.CODE_PRONTO_PREFIX)) {
-//            //Convert Pronto to Broadlink format
-//            String broadlinkCode = CodeFormatUtils.convertCodePronto2Broadlink(value);
-//            if (broadlinkCode == null || broadlinkCode.length() < 10) {
-//                String errMsg = getString(R.string.invalid_input_code);
-//                if (userInitiated)
-//                    ToastUtil.showErrorMessageWithSuperToast(this, errMsg, TAG);
-//                return;
-//            }
-//
-//            this.tvPasteInstructions.setVisibility(View.GONE);
-//            this.grpBroadlink.setVisibility(View.VISIBLE);
-//            this.grpPronto.setVisibility(View.VISIBLE);
-//            this.tvCodeValuePronto.setText(value);
-//            this.tvCodeValueBroadlink.setText(broadlinkCode);
-//        }
-//    }
+    private void autoPasteIfValid() {
+        CustomClipboardManager customClipboardManager = new CustomClipboardManager();
+        String value = customClipboardManager.readFromClipboard(this);
+        if (value.startsWith("https://www.lazada.vn") || value.startsWith("http://www.lazada.vn") || value.contains("lazada")) {
+            onBtnPasteClicked(false);
+        }
+    }
+
+    private void onBtnPasteClicked(boolean userInitiated) {
+        CustomClipboardManager customClipboardManager = new CustomClipboardManager();
+        String value = customClipboardManager.readFromClipboard(this);
+        setCodeInput(value, userInitiated);
+    }
+
+    private void setCodeInput(String value, boolean userInitiated) {
+        if (urlInputView.getText().toString().isEmpty()) {
+            stereoView.toNext();
+        }
+        urlInputView.setText(value);
+
+    }
 
     public String resolveUrl(String url, boolean showToast) {
         if (url.startsWith("https://www.lazada.vn") || url.startsWith("http://www.lazada.vn")) {
