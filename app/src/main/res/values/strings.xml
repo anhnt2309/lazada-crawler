@@ -4,4 +4,9 @@
     <string name="empty_string"></string>
     <string name="txt_is_running">Đang chạy</string>
     <string name="txt_start">Bắt đầu chạy</string>
+    <string name="txt_url_cannot_be_null">Địa chỉ url không được rỗng</string>
+    <string name="txt_stop">Dừng</string>
+    <string name="cancel_promt">Bạn có chắc chắn muốn dừng?</string>
+    <string name="agree">Đồng ý</string>
+    <string name="cancel">Huỷ</string>
 </resources>
