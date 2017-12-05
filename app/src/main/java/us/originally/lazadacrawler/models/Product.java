@@ -33,14 +33,16 @@ public class Product {
     public ProductRating productRating;
     public ArrayList<Commnent> commnent;
 
+    public String saling_location;
+
     public Product() {
     }
 
     public Product(String name, String brand, String brandUrl, ArrayList<String> detail, ArrayList<String> imageUrls,
                    String current_price, String old_price, String currency, String percen_sale, String installment,
-                   String warranty_time,String warranty_type, String warranty_detail, String pay_method, String payback_policy,
-                   String payback_subtitle,String payback_detail, String product_included, Saler saler, ProductRating productRating,
-                   ArrayList<Commnent> commnent) {
+                   String warranty_time, String warranty_type, String warranty_detail, String pay_method, String payback_policy,
+                   String payback_subtitle, String payback_detail, String product_included, Saler saler, ProductRating productRating,
+                   ArrayList<Commnent> commnent, String saling_location) {
         this.name = name;
         this.brand = brand;
         this.brandUrl = brandUrl;
@@ -67,5 +69,11 @@ public class Product {
         this.saler = saler;
         this.productRating = productRating;
         this.commnent = commnent;
+
+        this.saling_location = saling_location;
+    }
+
+    public String getWarranty() {
+        return warranty_time + " " + warranty_type;
     }
 }

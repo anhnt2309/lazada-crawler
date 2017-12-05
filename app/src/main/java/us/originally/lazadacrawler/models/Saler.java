@@ -20,4 +20,8 @@ public class Saler {
         this.saler_scale = saler_scale;
         this.saler_url = saler_url;
     }
+
+    public String getSalerSalingTime() {
+        return saler_saleTime + " " + saler_saleTime_unit;
+    }
 }
