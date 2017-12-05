@@ -1,6 +1,8 @@
 package us.originally.lazadacrawler;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Handler;
@@ -27,16 +29,25 @@ import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import us.originally.lazadacrawler.activities.AlgorithmActivity;
 import us.originally.lazadacrawler.custom.RippleView;
 import us.originally.lazadacrawler.custom.StereoView;
 import us.originally.lazadacrawler.manager.CustomClipboardManager;
 import us.originally.lazadacrawler.models.Product;
 import us.originally.lazadacrawler.utils.LogUtil;
 import us.originally.lazadacrawler.utils.ToastUtil;
+import weka.associations.Apriori;
+import weka.core.Attribute;
+import weka.core.DenseInstance;
+import weka.core.FastVector;
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils;
+import weka.filters.Filter;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -66,14 +77,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView imgClearUrl;
     private LinearLayout btnPaste;
     private RippleView rvPaste;
+    private TextView tvRun;
+
     private int translateY;
     private ArrayList<String> detailUrls;
+
+    private Instances instances;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         initUI();
+
         detailUrls = new ArrayList<>();
         stereoView.setStartScreen(0);
         stereoView.post(new Runnable() {
@@ -117,6 +133,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvInputtedUrl = findViewById(R.id.tv_inputted_url);
         tvUrlText = findViewById(R.id.tv_url_text);
         tvUrlText.setVisibility(View.INVISIBLE);
+
+        tvRun = findViewById(R.id.tv_run_apriori);
+        tvRun.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, AlgorithmActivity.class));
+            }
+        });
+
 
         urlInputView.addTextChangedListener(new TextWatcher() {
             @Override
@@ -163,16 +188,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private WebCrawler.CrawlingCallback mCallback = new WebCrawler.CrawlingCallback() {
 
         @Override
-        public void onPageCrawlingCompleted() {
+        public void onPageCrawlingCompleted(String url) {
             crawledUrlCount++;
             progressText.post(new Runnable() {
 
                 @Override
                 public void run() {
                     progressText.setText(" Đã crawl được " + crawledUrlCount + " trang!!!");
-
                 }
             });
+            Log.e("Crawled URl", url);
         }
 
         @Override
@@ -331,7 +356,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (crawledUrlCount > 0)
                 printCrawledEntriesFromDb();
 
-            detailUrls = getCrawledLinkFromDb();
+            detailUrls = getCrawledLinkFromDb(this);
             ArrayList<Product> products = new ArrayList<>();
             for (String model : detailUrls) {
                 Product product = new Gson().fromJson(model, Product.class);
@@ -339,6 +364,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
 
             Log.e("x", "" + products.size());
+
 
         }
 
@@ -401,10 +427,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     };
 
 
-    protected ArrayList<String> getCrawledLinkFromDb() {
+    public static ArrayList<String> getCrawledLinkFromDb(Context context) {
         ArrayList<String> returnLinks = new ArrayList<>();
         int count = 0;
-        CrawlerDB mCrawlerDB = new CrawlerDB(this);
+        CrawlerDB mCrawlerDB = new CrawlerDB(context);
         SQLiteDatabase db = mCrawlerDB.getReadableDatabase();
 
         Cursor mCursor = db.query(CrawlerDB.TABLE_NAME, null, null, null, null,
@@ -473,6 +499,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         url = url.replace(" ", "+");
         String finalUrl = "https://www.lazada.vn/catalog/?q=" + url;
         return finalUrl;
+
 
     }
 
