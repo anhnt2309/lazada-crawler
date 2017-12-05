@@ -19,27 +19,22 @@ android {
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.android.support.constraint:constraint-layout:1.0.2'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
-
     compile 'com.android.support:support-v4:26.+'
     compile 'org.jsoup:jsoup:1.11.2'
-
     compile 'com.airbnb.android:lottie:2.3.0'
-
     //gson
     compile 'com.google.code.gson:gson:2.8.2'
     compile 'com.squareup.retrofit2:converter-gson:2.1.0'
-
     compile 'com.afollestad.material-dialogs:core:0.9.6.0'
-
     compile 'com.squareup.picasso:picasso:2.5.2'
     compile 'com.veinhorn.scrollgalleryview:library:1.0.6'
-
     compile 'com.squareup.okio:okio:1.13.0'
+    implementation files('libs/wekaSTRIPPED.jar')
 }
 
