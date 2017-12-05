@@ -30,6 +30,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
+import us.originally.lazadacrawler.manager.CacheManager;
 import us.originally.lazadacrawler.models.Commnent;
 import us.originally.lazadacrawler.models.Product;
 import us.originally.lazadacrawler.models.ProductRating;
@@ -41,7 +42,7 @@ public class WebCrawler {
      * Interface for crawling callback
      */
     interface CrawlingCallback {
-        void onPageCrawlingCompleted();
+        void onPageCrawlingCompleted(String url);
 
         void onPageCrawlingFailed(String Url, int errorCode);
 
@@ -152,7 +153,7 @@ public class WebCrawler {
                 synchronized (lock) {
                     crawledURL.add(url);
                 }
-                mCallback.onPageCrawlingCompleted();
+                mCallback.onPageCrawlingCompleted(url);
             } else {
                 mCallback.onPageCrawlingFailed(url, -1);
             }
@@ -162,6 +163,16 @@ public class WebCrawler {
                 // JSoup Library used to filter urls from html body
                 //get link in 1 search page
                 Document doc = Jsoup.parse(pageContent.toString());
+                Elements locationDoc = doc.select(".merchandise-list__item");
+
+                for(Element element:locationDoc){
+                    Elements locationUrlDoc = element.select(".merchandise__link");
+                    String locationUrl = locationUrlDoc.select("a[href]").attr("href");
+                    String location = element.select(".c-m-product-card-location__title").text();
+                    CacheManager.saveStringCacheData(locationUrl,location);
+                }
+
+
                 Elements searchProductLinks = doc.select(".merchandise__link");
                 Elements links = searchProductLinks.select("a[href]");
                 for (Element link : links) {
@@ -174,6 +185,9 @@ public class WebCrawler {
 
                     }
                 }
+
+
+
                 // End JSoup 1 page get more page
                 // get link next page
                 Elements searchNextPage = doc.select(".page-link--next");
@@ -195,7 +209,7 @@ public class WebCrawler {
                 synchronized (lock) {
                     crawledURL.add(url);
                 }
-                mCallback.onPageCrawlingCompleted();
+                mCallback.onPageCrawlingCompleted(url);
             }
 //            else {
 //                mCallback.onPageCrawlingFailed(url, -2);
@@ -215,10 +229,12 @@ public class WebCrawler {
                 //get product Rating
                 ProductRating productRating = getProductRating(doc);
 
+                String location = CacheManager.getStringCacheData(url);
                 //get ProductDetail
                 ArrayList<Commnent> commnents = new ArrayList<>();
-                Product product = getProductDetail(doc, saler, productRating, commnents);
+                Product product = getProductDetail(doc, saler, productRating, commnents,location);
                 String productString = new Gson().toJson(product);
+
 
                 insertIntoCrawlerDB(url, productString);
 
@@ -227,7 +243,7 @@ public class WebCrawler {
 
         }
 
-        private Product getProductDetail(Document doc, Saler saler, ProductRating productRating, ArrayList<Commnent> commnents) {
+        private Product getProductDetail(Document doc, Saler saler, ProductRating productRating, ArrayList<Commnent> commnents,String location) {
             Elements productDoc = doc.select("#prd-detail-page");
             String productName = productDoc.select("#prod_title").text();
 
@@ -281,7 +297,7 @@ public class WebCrawler {
             Product product = new Product(productName, brandName, brandUrl, producDetails, producImageUrls,
                     currenPrice, oldPrice, currency, percenOff, installMent, warrantyTime, warrantyType,
                     warrantyDetail, paymentMethod, paybackPolicy, payback_detail, payback_subtitle, product_included,
-                    saler, productRating, commnents);
+                    saler, productRating, commnents,location);
 
             return product;
         }
