@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:name=".BaseApplication"
@@ -22,6 +24,13 @@
         </activity>
 
         <activity android:name=".activities.AlgorithmActivity" />
+        <activity android:name=".activities.DecisionTreeActivity" />
+        <activity android:name=".activities.CrawlResultActivity" />
+        <activity
+            android:name=".activities.ProductDetailActivity"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Sliding.Light"/>
     </application>
 
 </manifest>
