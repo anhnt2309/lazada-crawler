@@ -67,5 +67,12 @@
         perversius. In his igitur partibus duabus nihil erat, quod Zeno commutare gestiret. Est enim effectrix
         multarum et magnarum voluptatum. Bonum negas esse divitias, praeposìtum esse dicis?
     </string>
+    <string name="txt_category">Ngành hàng: <b>%1$s</b></string>
+    <string name="txt_sell_location">Bán ở: <b>%1$s</b></string>
+    <string name="txt_sell_rate">Đánh giá: <b>%1$s</b></string>
+    <string name="txt_sell_time">Thời gian trên lazada: <b>%1$s</b></string>
+    <string name="txt_sell_scale">Quy mô nhà bán hàng: <b>%1$s/5</b></string>
+
+    <string name="num_rate"><b>%1$s</b> đánh giá</string>
 
 </resources>
