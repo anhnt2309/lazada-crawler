@@ -1,60 +1,71 @@
 package us.originally.lazadacrawler.activities;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.ClipboardManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.furture.react.DuktapeEngine;
 import com.google.gson.Gson;
 
+import java.io.File;
 import java.util.ArrayList;
 
-import us.originally.lazadacrawler.CrawlerDB;
 import us.originally.lazadacrawler.MainActivity;
 import us.originally.lazadacrawler.R;
+import us.originally.lazadacrawler.manager.CustomClipboardManager;
+import us.originally.lazadacrawler.models.GraphViz;
 import us.originally.lazadacrawler.models.Product;
+import us.originally.lazadacrawler.models.js.AssetScript;
+import us.originally.lazadacrawler.utils.ToastUtil;
 import weka.associations.Apriori;
-import weka.associations.AssociationRule;
-import weka.associations.AssociatorEvaluation;
+import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
-import weka.core.FastVector;
 import weka.core.Instances;
 import weka.filters.Filter;
+import weka.gui.visualize.plugins.GraphVizPanel;
+import weka.gui.visualize.plugins.GraphVizTreeVisualization;
+
 
 /**
- * Created by TuanAnh on 12/4/17.
+ * Created by TuanAnh on 12/7/17.
  */
 
-public class AlgorithmActivity extends AppCompatActivity {
+public class DecisionTreeActivity extends AppCompatActivity {
     private ArrayList<String> detailUrls;
     private Instances instances;
     private TextView tvResult;
     private LottieAnimationView ltLoading;
+    private ImageView imgGraph;
+    private DuktapeEngine duktapeEngine;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Apriori Result");
+        setTitle("Decision Tree Result");
         setContentView(R.layout.activity_algorithm);
         tvResult = findViewById(R.id.tv_algorithm_result);
         ltLoading = findViewById(R.id.animation_view);
         ltLoading.setVisibility(View.VISIBLE);
+        imgGraph = findViewById(R.id.tv_algorithm_graph);
 
         new Thread(new Runnable() {
             @Override
             public void run() {
-                runApriori();
+                runJ48();
             }
         }).start();
     }
 
-    public void runApriori() {
+    public void runJ48() {
 
         ArrayList<Product> products = getProductFromDB();
 
@@ -86,16 +97,31 @@ public class AlgorithmActivity extends AppCompatActivity {
 //                        ConverterUtils.DataSource dataSource = new ConverterUtils.DataSource(dataSet);
 //                        Instances instances = dataSource.getDataSet();
                     //local data
-                    final Apriori model = new Apriori();
-                    model.setNumRules(100);
-                    model.setLowerBoundMinSupport(0.2);
-                    model.buildAssociations(instances);
+                    instances.setClassIndex(3);
+                    final J48 model = new J48();
+                    model.buildClassifier(instances);
+
                     Log.d("xxx", model.toString());
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            tvResult.setText(model.toString());
-                            ltLoading.setVisibility(View.GONE);
+                            try {
+                                CustomClipboardManager clipboardManager = new CustomClipboardManager();
+                                clipboardManager.copyToClipboard(DecisionTreeActivity.this, model.graph());
+                                ToastUtil.showInfo(DecisionTreeActivity.this, "Đã copy cây quyết định vào clipboard");
+                                Log.e("graph", model.graph());
+                                tvResult.setText(model.toString());
+                                ltLoading.setVisibility(View.GONE);
+
+                                byte[] imageByte = createDotGraph(model.graph());
+                                Bitmap imageBitmap = BitmapFactory.decodeByteArray(imageByte, 0, imageByte.length);
+                                imgGraph.setImageBitmap(imageBitmap);
+
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+
                         }
                     });
 //                    for (AssociationRule associationRule : model.getAssociationRules().getRules()) {
@@ -123,9 +149,9 @@ public class AlgorithmActivity extends AppCompatActivity {
     public void formatDataToDRFF(ArrayList<Product> products) {
         //construct weka Instances object with crawled data
         ArrayList<Attribute> atts = new ArrayList<Attribute>(8);
-        ArrayList<String> classVal = new ArrayList<String>();
-        classVal.add("A");
-        classVal.add("B");
+//        ArrayList<String> classVal = new ArrayList<String>();
+//        classVal.add("A");
+//        classVal.add("B");
         atts.add(new Attribute("installment", (ArrayList<String>) null));
         atts.add(new Attribute("current_price", (ArrayList<String>) null));
         atts.add(new Attribute("percen_sale", (ArrayList<String>) null));
@@ -134,6 +160,9 @@ public class AlgorithmActivity extends AppCompatActivity {
         atts.add(new Attribute("warranty_time", (ArrayList<String>) null));
         atts.add(new Attribute("product_rate", (ArrayList<String>) null));
         atts.add(new Attribute("brand", (ArrayList<String>) null));
+        atts.add(new Attribute("saler_name", (ArrayList<String>) null));
+        atts.add(new Attribute("saler_scale", (ArrayList<String>) null));
+        atts.add(new Attribute("category", (ArrayList<String>) null));
 
 
         instances = new Instances("TestInstances", atts, products.size());
@@ -152,6 +181,9 @@ public class AlgorithmActivity extends AppCompatActivity {
             instanceValue1[5] = instances.attribute(5).addStringValue(product.getWarranty());
             instanceValue1[6] = instances.attribute(6).addStringValue(product.productRating.overall_rate);
             instanceValue1[7] = instances.attribute(7).addStringValue(product.brand);
+            instanceValue1[8] = instances.attribute(8).addStringValue(product.saler.saler_name);
+            instanceValue1[9] = instances.attribute(9).addStringValue("" + product.saler.saler_scale);
+            instanceValue1[10] = instances.attribute(10).addStringValue("" + product.category);
 
             instances.add(new DenseInstance(1.0, instanceValue1));
         }
@@ -161,4 +193,22 @@ public class AlgorithmActivity extends AppCompatActivity {
         System.out.println(instances);
         System.out.println("--------------------------");
     }
+
+    public byte[] createDotGraph(String dotFormat) {
+        GraphViz gv = new GraphViz(DecisionTreeActivity.this);
+        gv.add(dotFormat);
+        // String type = "gif";
+        String type = "png";
+        // gv.increaseDpi();
+        gv.decreaseDpi();
+        gv.decreaseDpi();
+
+//        File out = new File(fileName+"."+ type);
+//        gv.writeGraphToFile( gv.getGraph( gv.getDotSource(), type ), out );
+
+        return gv.getGraph(gv.getDotSource(), type);
+    }
+
+
 }
+

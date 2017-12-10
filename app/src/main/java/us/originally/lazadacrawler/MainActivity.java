@@ -1,6 +1,5 @@
 package us.originally.lazadacrawler;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -16,7 +15,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
-import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,27 +25,22 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
+import com.ebanx.swipebtn.OnActiveListener;
+import com.ebanx.swipebtn.SwipeButton;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import us.originally.lazadacrawler.activities.AlgorithmActivity;
+import us.originally.lazadacrawler.activities.CrawlResultActivity;
+import us.originally.lazadacrawler.activities.DecisionTreeActivity;
 import us.originally.lazadacrawler.custom.RippleView;
 import us.originally.lazadacrawler.custom.StereoView;
 import us.originally.lazadacrawler.manager.CustomClipboardManager;
 import us.originally.lazadacrawler.models.Product;
 import us.originally.lazadacrawler.utils.LogUtil;
 import us.originally.lazadacrawler.utils.ToastUtil;
-import weka.associations.Apriori;
-import weka.core.Attribute;
-import weka.core.DenseInstance;
-import weka.core.FastVector;
 import weka.core.Instances;
-import weka.core.converters.ConverterUtils;
-import weka.filters.Filter;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -77,7 +70,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView imgClearUrl;
     private LinearLayout btnPaste;
     private RippleView rvPaste;
-    private TextView tvRun;
+    private SwipeButton btnRun;
+    private SwipeButton btnRunDecision;
+    private Button btnData;
 
     private int translateY;
     private ArrayList<String> detailUrls;
@@ -88,8 +83,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initUI();
 
+        initUI();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final ArrayList<String> links = getCrawledLinkFromDb(MainActivity.this);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        btnRun.setText(getResources().getString(R.string.run_apriori, links.size()));
+                        btnRunDecision.setText(getResources().getString(R.string.run_decision, links.size()));
+                    }
+                });
+            }
+        }).start();
         detailUrls = new ArrayList<>();
         stereoView.setStartScreen(0);
         stereoView.post(new Runnable() {
@@ -134,14 +142,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvUrlText = findViewById(R.id.tv_url_text);
         tvUrlText.setVisibility(View.INVISIBLE);
 
-        tvRun = findViewById(R.id.tv_run_apriori);
-        tvRun.setOnClickListener(new View.OnClickListener() {
+        btnData = findViewById(R.id.btn_view_data);
+        btnData.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                startActivity(new Intent(MainActivity.this, CrawlResultActivity.class));
+            }
+        });
+
+        btnRun = findViewById(R.id.btn_run);
+        btnRun.setOnActiveListener(new OnActiveListener() {
+            @Override
+            public void onActive() {
                 startActivity(new Intent(MainActivity.this, AlgorithmActivity.class));
             }
         });
 
+        btnRunDecision = findViewById(R.id.btn_run_decision);
+        btnRunDecision.setOnActiveListener(new OnActiveListener() {
+            @Override
+            public void onActive() {
+                startActivity(new Intent(MainActivity.this, DecisionTreeActivity.class));
+            }
+        });
 
         urlInputView.addTextChangedListener(new TextWatcher() {
             @Override
@@ -174,12 +197,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         rvPaste.setOnClickListener(this);
         btnPaste.setOnClickListener(this);
         imgButtonIcon.setOnClickListener(this);
+
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         autoPasteIfValid();
+//        btnRun.setHasActivationState(false);
     }
 
     /**
@@ -262,6 +287,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     Log.e("Main", finalWebUrl);
                     crawler.startCrawlerTask(finalWebUrl, true, false, false);
+
+                    //btn run logic
+                    btnRunDisabled();
+
                     startButton.setEnabled(false);
                     imgButtonIcon.setImageResource(android.R.drawable.ic_media_pause);
                     startButton.setText(R.string.txt_is_running);
@@ -324,6 +353,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void btnRunDisabled() {
+        btnRun.setText(getResources().getString(R.string.run_apriori, 0));
+        btnRun.setEnabled(false);
+        btnRun.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
+        btnRun.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+        btnRun.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+
+
+        btnRunDecision.setText(getResources().getString(R.string.run_apriori, 0));
+        btnRunDecision.setEnabled(false);
+        btnRunDecision.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
+        btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+        btnRunDecision.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+    }
+
+    public void btnRunEnabled() {
+        btnRun.setEnabled(true);
+        btnRun.setButtonBackground(getResources().getDrawable(R.drawable.shape_button));
+        btnRun.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
+        btnRun.setText(getResources().getString(R.string.run_apriori, detailUrls.size()));
+        btnRun.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_done));
+
+        btnRunDecision.setEnabled(true);
+        btnRunDecision.setButtonBackground(getResources().getDrawable(R.drawable.shape_button));
+        btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
+        btnRunDecision.setText(getResources().getString(R.string.run_apriori, detailUrls.size()));
+        btnRunDecision.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_done));
+    }
+
     private Handler handler = new Handler() {
         public void handleMessage(android.os.Message msg) {
             stopCrawling();
@@ -365,6 +423,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             Log.e("x", "" + products.size());
 
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    btnRunEnabled();
+                }
+            });
 
         }
 
