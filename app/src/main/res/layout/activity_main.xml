@@ -223,9 +223,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="15dp"
+                android:paddingRight="10dp"
+                android:paddingLeft="10"
                 android:gravity="center"
                 android:background="@drawable/shape_button"
-                android:text="Xem data"
+                android:text="Xem Dữ liệ"
                 />
 
             <com.ebanx.swipebtn.SwipeButton
