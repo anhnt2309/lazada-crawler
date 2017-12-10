@@ -227,7 +227,7 @@
                 android:paddingLeft="10dp"
                 android:gravity="center"
                 android:background="@drawable/shape_button"
-                android:text="Xem Dữ liệ"
+                android:text="Xem Dữ liệu"
                 />
 
             <com.ebanx.swipebtn.SwipeButton
