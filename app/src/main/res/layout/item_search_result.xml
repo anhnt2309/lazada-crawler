@@ -28,8 +28,8 @@
     <RelativeLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
         android:layout_marginRight="10dp"
+        android:layout_marginTop="5dp"
         android:layout_weight="5">
 
         <me.grantland.widget.AutofitTextView
@@ -132,62 +132,65 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/grpSeller"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_below="@id/grpPrice"
-            android:layout_marginBottom="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="15dp"
-            android:orientation="horizontal">
+            android:layout_below="@id/grpPrice">
 
-            <ImageView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:id="@+id/grpSeller"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:src="@mipmap/ic_sell" />
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="15dp"
 
-            <me.grantland.widget.AutofitTextView
-                android:id="@+id/tv_seller"
-                style="@style/text_subtitle"
-                android:layout_width="wrap_content"
+                android:layout_weight="2"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@mipmap/ic_sell" />
+
+                <me.grantland.widget.AutofitTextView
+                    android:id="@+id/tv_seller"
+                    style="@style/text_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="2dp"
+                    android:maxLines="1"
+                    android:text="CellPhones"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/grpLocation"
+                android:layout_width="0dp"
+                android:layout_weight="2"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:maxLines="1"
-                android:text="CellPhones"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
+                android:layout_marginBottom="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="15dp"
+                android:gravity="right"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@mipmap/ic_sell_location" />
+
+                <me.grantland.widget.AutofitTextView
+                    android:id="@+id/tv_location"
+                    style="@style/text_subtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="2dp"
+                    android:maxLines="1"
+                    android:text="Ha noi"
+                    android:textColor="@android:color/black"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/grpLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-
-            android:layout_below="@id/grpPrice"
-            android:layout_alignParentLeft="true"
-            android:layout_marginBottom="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="15dp"
-            android:orientation="horizontal">
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@mipmap/ic_sell_location" />
-
-            <me.grantland.widget.AutofitTextView
-                android:id="@+id/tv_location"
-                style="@style/text_subtitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="2dp"
-                android:maxLines="1"
-                android:text="Ha noi"
-                android:textColor="@android:color/black"
-                android:textSize="12sp" />
-        </LinearLayout>
-
 
 
     </RelativeLayout>
