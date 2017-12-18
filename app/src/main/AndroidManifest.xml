@@ -15,7 +15,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:screenOrientation="sensorPortrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -26,11 +28,14 @@
         <activity android:name=".activities.AlgorithmActivity" />
         <activity android:name=".activities.DecisionTreeActivity" />
         <activity android:name=".activities.CrawlResultActivity" />
+        <activity android:name=".activities.BrowserActivity"
+            android:screenOrientation="sensorLandscape">
+        </activity>
         <activity
             android:name=".activities.ProductDetailActivity"
             android:excludeFromRecents="true"
             android:taskAffinity=""
-            android:theme="@style/Theme.Sliding.Light"/>
+            android:theme="@style/Theme.Sliding.Light" />
     </application>
 
 </manifest>
