@@ -35,6 +35,7 @@ public class CrawlResultActivity extends AppCompatActivity implements SearchResu
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTitle("Dữ Liệu Crawl Được");
         setContentView(R.layout.activity_crawl_result);
         rvResult = findViewById(R.id.rv_result);
         tvTotal = findViewById(R.id.tv_total_product);
