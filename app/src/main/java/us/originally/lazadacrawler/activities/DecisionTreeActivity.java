@@ -1,6 +1,6 @@
 package us.originally.lazadacrawler.activities;
 
-import android.content.ClipboardManager;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -8,31 +8,33 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Scroller;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.furture.react.DuktapeEngine;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 import us.originally.lazadacrawler.MainActivity;
 import us.originally.lazadacrawler.R;
 import us.originally.lazadacrawler.manager.CustomClipboardManager;
 import us.originally.lazadacrawler.models.GraphViz;
 import us.originally.lazadacrawler.models.Product;
-import us.originally.lazadacrawler.models.js.AssetScript;
 import us.originally.lazadacrawler.utils.ToastUtil;
-import weka.associations.Apriori;
 import weka.classifiers.trees.J48;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.filters.Filter;
-import weka.gui.visualize.plugins.GraphVizPanel;
-import weka.gui.visualize.plugins.GraphVizTreeVisualization;
 
 
 /**
@@ -46,26 +48,112 @@ public class DecisionTreeActivity extends AppCompatActivity {
     private LottieAnimationView ltLoading;
     private ImageView imgGraph;
     private DuktapeEngine duktapeEngine;
+    private LinearLayout btnDrawTree;
+    private Spinner spinnerAtrr;
+    private List<String> attrs;
+    private String decisiveAttr;
+    private ScrollView svResult;
+    private LinearLayout grpSpinner;
+    private TextView tvDecisiveAttr;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Decision Tree Result");
+        setTitle("Kết quả cây quyết định");
         setContentView(R.layout.activity_algorithm);
         tvResult = findViewById(R.id.tv_algorithm_result);
         ltLoading = findViewById(R.id.animation_view);
-        ltLoading.setVisibility(View.VISIBLE);
-        imgGraph = findViewById(R.id.tv_algorithm_graph);
 
-        new Thread(new Runnable() {
+        imgGraph = findViewById(R.id.tv_algorithm_graph);
+        btnDrawTree = findViewById(R.id.btnDrawTree);
+        spinnerAtrr = findViewById(R.id.spinner_decicion_attr);
+        svResult = findViewById(R.id.sv_result);
+        grpSpinner = findViewById(R.id.grpSpinner);
+        tvDecisiveAttr = findViewById(R.id.tv_decisive_attr);
+
+
+        btnDrawTree.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void run() {
-                runJ48();
+            public void onClick(View view) {
+                Intent intent = new Intent(DecisionTreeActivity.this, BrowserActivity.class);
+                intent.putExtra("url", "http://www.webgraphviz.com");
+                startActivity(intent);
             }
-        }).start();
+        });
+
+        attrs = new ArrayList<String>();
+        attrs.add("Thuộc tính ");
+        attrs.add("Installment");
+        attrs.add("Current Price");
+        attrs.add("Percen Sale");
+        attrs.add("Saler Rate");
+        attrs.add("Sale Time On Laza");
+        attrs.add("Product Rate");
+        attrs.add("Saler Name");
+        attrs.add("Saler Scale");
+        attrs.add("Category");
+        attrs.add("Brand");
+
+
+        ArrayAdapter<String> spinnerAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, attrs);
+        spinnerAtrr.setAdapter(spinnerAdapter);
+        spinnerAtrr.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                if(i == 0)
+                    return;
+                String attr = attrs.get(i);
+                decisiveAttr = "";
+                if (attr.equals("Current Price"))
+                    decisiveAttr = "current_price";
+                if (attr.equals("Installment"))
+                    decisiveAttr = "installment";
+                if (attr.equals("Percen Sale"))
+                    decisiveAttr = "percen_sale";
+                if (attr.equals("Saler Rate"))
+                    decisiveAttr = "saler_rate";
+                if (attr.equals("Sale Time On Laza"))
+                    decisiveAttr = "saler_saleTime";
+                if (attr.equals("Product Rate"))
+                    decisiveAttr = "product_rate";
+                if (attr.equals("Saler Name"))
+                    decisiveAttr = "saler_name";
+                if (attr.equals("Saler Scale"))
+                    decisiveAttr = "saler_scale";
+                if (attr.equals("Category"))
+                    decisiveAttr = "category";
+                if (attr.equals("Brand"))
+                    decisiveAttr = "brand";
+
+                tvDecisiveAttr.setText(getResources().getString(R.string.txt_decisive_attr,attr));
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        runJ48(decisiveAttr);
+                    }
+                }).start();
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+
+
+        });
+
+
     }
 
-    public void runJ48() {
+    public void runJ48(final String attr) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ltLoading.setVisibility(View.VISIBLE);
+                grpSpinner.setVisibility(View.GONE);
+            }
+        });
 
         ArrayList<Product> products = getProductFromDB();
 
@@ -97,7 +185,7 @@ public class DecisionTreeActivity extends AppCompatActivity {
 //                        ConverterUtils.DataSource dataSource = new ConverterUtils.DataSource(dataSet);
 //                        Instances instances = dataSource.getDataSet();
                     //local data
-                    instances.setClassIndex(3);
+                    instances.setClassIndex(instances.attribute(attr).index());
                     final J48 model = new J48();
                     model.buildClassifier(instances);
 
@@ -112,6 +200,9 @@ public class DecisionTreeActivity extends AppCompatActivity {
                                 Log.e("graph", model.graph());
                                 tvResult.setText(model.toString());
                                 ltLoading.setVisibility(View.GONE);
+                                svResult.setVisibility(View.VISIBLE);
+                                btnDrawTree.setVisibility(View.VISIBLE);
+
 
                                 byte[] imageByte = createDotGraph(model.graph());
                                 Bitmap imageBitmap = BitmapFactory.decodeByteArray(imageByte, 0, imageByte.length);
@@ -163,6 +254,7 @@ public class DecisionTreeActivity extends AppCompatActivity {
         atts.add(new Attribute("saler_name", (ArrayList<String>) null));
         atts.add(new Attribute("saler_scale", (ArrayList<String>) null));
         atts.add(new Attribute("category", (ArrayList<String>) null));
+//        atts.add(new Attribute("payback_policy", (ArrayList<String>) null));
 
 
         instances = new Instances("TestInstances", atts, products.size());
@@ -184,6 +276,8 @@ public class DecisionTreeActivity extends AppCompatActivity {
             instanceValue1[8] = instances.attribute(8).addStringValue(product.saler.saler_name);
             instanceValue1[9] = instances.attribute(9).addStringValue("" + product.saler.saler_scale);
             instanceValue1[10] = instances.attribute(10).addStringValue("" + product.category);
+//            instanceValue1[11] = instances.attribute(11).addStringValue("" + product.payback_policy);
+
 
             instances.add(new DenseInstance(1.0, instanceValue1));
         }
