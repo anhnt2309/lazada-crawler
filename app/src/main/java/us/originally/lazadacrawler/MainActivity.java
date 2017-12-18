@@ -361,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRun.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
 
 
-        btnRunDecision.setText(getResources().getString(R.string.run_apriori, 0));
+        btnRunDecision.setText(getResources().getString(R.string.run_decision, 0));
         btnRunDecision.setEnabled(false);
         btnRunDecision.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
         btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
@@ -378,7 +378,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRunDecision.setEnabled(true);
         btnRunDecision.setButtonBackground(getResources().getDrawable(R.drawable.shape_button));
         btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
-        btnRunDecision.setText(getResources().getString(R.string.run_apriori, detailUrls.size()));
+        btnRunDecision.setText(getResources().getString(R.string.run_decision, detailUrls.size()));
         btnRunDecision.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_done));
     }
 
