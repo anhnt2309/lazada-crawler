@@ -58,6 +58,7 @@ public class ProductDetailActivity extends SlidingActivity {
 
     @Override
     public void init(Bundle savedInstanceState) {
+        setTitle("Chi Tiết Sản Phẩm");
         enableFullscreen();
         Intent intent = getIntent();
         if (intent == null)
