@@ -232,10 +232,12 @@ public class WebCrawler {
 
                 Elements categoryDoc = doc.select(".breadcrumb__item-text");
                 Elements categoryTextDoc = categoryDoc.select("span[itemprop]");
-                String category = categoryTextDoc.get(1).text();
+                String category="";
+                if (categoryDoc.size() > 0)
+                    category = categoryTextDoc.get(1).text();
                 //get ProductDetail
                 ArrayList<Commnent> commnents = new ArrayList<>();
-                Product product = getProductDetail(doc, saler, productRating, commnents, location,category,url);
+                Product product = getProductDetail(doc, saler, productRating, commnents, location, category, url);
                 String productString = new Gson().toJson(product);
 
                 insertIntoCrawlerDB(url, productString);
@@ -245,7 +247,7 @@ public class WebCrawler {
 
         }
 
-        private Product getProductDetail(Document doc, Saler saler, ProductRating productRating, ArrayList<Commnent> commnents, String location,String category,String url) {
+        private Product getProductDetail(Document doc, Saler saler, ProductRating productRating, ArrayList<Commnent> commnents, String location, String category, String url) {
             Elements productDoc = doc.select("#prd-detail-page");
             String productName = productDoc.select("#prod_title").text();
 
@@ -296,7 +298,7 @@ public class WebCrawler {
             String product_included = doc.select(".inbox__item").text();
 
 
-            Product product = new Product(url,productName, brandName, category, brandUrl, producDetails, producImageUrls,
+            Product product = new Product(url, productName, brandName, category, brandUrl, producDetails, producImageUrls,
                     currenPrice, oldPrice, currency, percenOff, installMent, warrantyTime, warrantyType,
                     warrantyDetail, paymentMethod, paybackPolicy, payback_detail, payback_subtitle, product_included,
                     saler, productRating, commnents, location);
