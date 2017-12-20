@@ -7,6 +7,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.airbnb.lottie.LottieAnimationView;
@@ -36,15 +38,21 @@ public class AlgorithmActivity extends AppCompatActivity {
     private Instances instances;
     private TextView tvResult;
     private LottieAnimationView ltLoading;
+    private LinearLayout grpSpinner;
+    private ScrollView svResult;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Apriori Result");
+        setTitle("Chạy Apriori");
         setContentView(R.layout.activity_algorithm);
         tvResult = findViewById(R.id.tv_algorithm_result);
         ltLoading = findViewById(R.id.animation_view);
         ltLoading.setVisibility(View.VISIBLE);
+        grpSpinner = findViewById(R.id.grpSpinner);
+        grpSpinner.setVisibility(View.GONE);
+        svResult = findViewById(R.id.sv_result);
+        svResult.setVisibility(View.VISIBLE);
 
         new Thread(new Runnable() {
             @Override
@@ -61,10 +69,6 @@ public class AlgorithmActivity extends AppCompatActivity {
         formatDataToDRFF(products);
 
         //Apply filter to convert String to Nominal to run Apriori
-        String[] options = new String[2];
-        options[0] = "-R";                // "range"
-//            options[1] = "4"; // first attribute
-
         weka.filters.unsupervised.attribute.StringToNominal ff = new weka.filters.unsupervised.attribute.StringToNominal(); // new instance of filter
         try {
 //                ff.setOptions(options);
@@ -88,7 +92,7 @@ public class AlgorithmActivity extends AppCompatActivity {
                     //local data
                     final Apriori model = new Apriori();
                     model.setNumRules(100);
-                    model.setLowerBoundMinSupport(0.2);
+                    model.setLowerBoundMinSupport(0.1);
                     model.buildAssociations(instances);
                     Log.d("xxx", model.toString());
                     runOnUiThread(new Runnable() {
@@ -98,9 +102,6 @@ public class AlgorithmActivity extends AppCompatActivity {
                             ltLoading.setVisibility(View.GONE);
                         }
                     });
-//                    for (AssociationRule associationRule : model.getAssociationRules().getRules()) {
-//                        Log.e("Rules", associationRule.getPremise().toString());
-//                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -133,7 +134,7 @@ public class AlgorithmActivity extends AppCompatActivity {
         atts.add(new Attribute("saler_saleTime", (ArrayList<String>) null));
         atts.add(new Attribute("warranty_time", (ArrayList<String>) null));
         atts.add(new Attribute("product_rate", (ArrayList<String>) null));
-        atts.add(new Attribute("brand", (ArrayList<String>) null));
+//        atts.add(new Attribute("brand", (ArrayList<String>) null));
 
 
         instances = new Instances("TestInstances", atts, products.size());
@@ -151,14 +152,9 @@ public class AlgorithmActivity extends AppCompatActivity {
             instanceValue1[4] = instances.attribute(4).addStringValue(product.saler.getSalerSalingTime());
             instanceValue1[5] = instances.attribute(5).addStringValue(product.getWarranty());
             instanceValue1[6] = instances.attribute(6).addStringValue(product.productRating.overall_rate);
-            instanceValue1[7] = instances.attribute(7).addStringValue(product.brand);
+//            instanceValue1[7] = instances.attribute(7).addStringValue(product.brand);
 
             instances.add(new DenseInstance(1.0, instanceValue1));
         }
-
-        System.out.println("After adding any instance");
-        System.out.println("--------------------------");
-        System.out.println(instances);
-        System.out.println("--------------------------");
     }
 }
