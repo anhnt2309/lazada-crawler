@@ -214,12 +214,13 @@
         </LinearLayout>
 
         <LinearLayout
+            android:id="@+id/grpRun"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:orientation="vertical"
             android:gravity="center"
             android:layout_marginBottom="10dp"
-            android:layout_weight="2">
+            android:layout_weight="3">
 
             <Button
                 android:id="@+id/btn_view_data"
@@ -242,7 +243,7 @@
                 android:layout_marginStart="60dp"
                 app:button_background="@drawable/shape_button"
                 app:button_bottom_padding="20dp"
-                app:button_image_disabled="@drawable/ic_code"
+                app:button_image_disabled="@drawable/ic_apriori"
                 app:button_image_enabled="@drawable/ic_done"
                 app:button_image_height="60dp"
                 app:button_image_width="100dp"
@@ -269,7 +270,7 @@
                 android:layout_marginStart="60dp"
                 app:button_background="@drawable/shape_button"
                 app:button_bottom_padding="20dp"
-                app:button_image_disabled="@drawable/ic_code"
+                app:button_image_disabled="@drawable/ic_j48"
                 app:button_image_enabled="@drawable/ic_done"
                 app:button_image_height="60dp"
                 app:button_image_width="100dp"
@@ -279,6 +280,33 @@
                 app:has_activate_state="true"
                 app:initial_state="disabled"
                 app:inner_text="@string/run_decision"
+                app:inner_text_background="@drawable/shape_rounded"
+                app:inner_text_bottom_padding="18dp"
+                app:inner_text_color="@android:color/white"
+                app:inner_text_left_padding="90dp"
+                app:inner_text_size="16sp"
+                app:inner_text_top_padding="18dp" />
+
+            <com.ebanx.swipebtn.SwipeButton
+                android:id="@+id/btn_run_cluster"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_marginEnd="60dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginStart="60dp"
+                app:button_background="@drawable/shape_button"
+                app:button_bottom_padding="20dp"
+                app:button_image_disabled="@drawable/ic_k_mean"
+                app:button_image_enabled="@drawable/ic_done"
+                app:button_image_height="60dp"
+                app:button_image_width="100dp"
+                app:button_left_padding="20dp"
+                app:button_right_padding="20dp"
+                app:button_top_padding="20dp"
+                app:has_activate_state="true"
+                app:initial_state="disabled"
+                app:inner_text="@string/run_cluster"
                 app:inner_text_background="@drawable/shape_rounded"
                 app:inner_text_bottom_padding="18dp"
                 app:inner_text_color="@android:color/white"

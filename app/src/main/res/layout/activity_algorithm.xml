@@ -28,6 +28,7 @@
             android:orientation="vertical">
 
             <TextView
+                android:id="@+id/tv_select_attr"
                 style="@style/text_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -75,7 +76,7 @@
                 android:textSize="25sp"
                />
 
-            <TextView
+            <me.grantland.widget.AutofitTextView
                 android:id="@+id/tv_algorithm_result"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

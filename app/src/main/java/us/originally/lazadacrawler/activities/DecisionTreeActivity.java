@@ -59,7 +59,7 @@ public class DecisionTreeActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Kết quả cây quyết định");
+        setTitle("Chạy cây quyết định");
         setContentView(R.layout.activity_algorithm);
         tvResult = findViewById(R.id.tv_algorithm_result);
         ltLoading = findViewById(R.id.animation_view);
@@ -175,16 +175,12 @@ public class DecisionTreeActivity extends AppCompatActivity {
         }
 
 
-        //run weka apriori api
+        //run weka J48 api
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    //get data from url
-//                        String dataSet = "http://storm.cis.fordham.edu/~gweiss/data-mining/weka-data/weather.nominal.arff";
-//                        ConverterUtils.DataSource dataSource = new ConverterUtils.DataSource(dataSet);
-//                        Instances instances = dataSource.getDataSet();
-                    //local data
+                    //Chi dinh thuoc tinh quyet dinh
                     instances.setClassIndex(instances.attribute(attr).index());
                     final J48 model = new J48();
                     model.buildClassifier(instances);
@@ -202,8 +198,6 @@ public class DecisionTreeActivity extends AppCompatActivity {
                                 ltLoading.setVisibility(View.GONE);
                                 svResult.setVisibility(View.VISIBLE);
                                 btnDrawTree.setVisibility(View.VISIBLE);
-
-
                                 byte[] imageByte = createDotGraph(model.graph());
                                 Bitmap imageBitmap = BitmapFactory.decodeByteArray(imageByte, 0, imageByte.length);
                                 imgGraph.setImageBitmap(imageBitmap);
@@ -215,9 +209,6 @@ public class DecisionTreeActivity extends AppCompatActivity {
 
                         }
                     });
-//                    for (AssociationRule associationRule : model.getAssociationRules().getRules()) {
-//                        Log.e("Rules", associationRule.getPremise().toString());
-//                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -240,11 +231,6 @@ public class DecisionTreeActivity extends AppCompatActivity {
     public void formatDataToDRFF(ArrayList<Product> products) {
         //construct weka Instances object with crawled data
         ArrayList<Attribute> atts = new ArrayList<Attribute>(8);
-//        ArrayList<String> classVal = new ArrayList<String>();
-//        classVal.add("A");
-//        classVal.add("B");
-        atts.add(new Attribute("installment", (ArrayList<String>) null));
-        atts.add(new Attribute("current_price", (ArrayList<String>) null));
         atts.add(new Attribute("percen_sale", (ArrayList<String>) null));
         atts.add(new Attribute("saler_rate", (ArrayList<String>) null));
         atts.add(new Attribute("saler_saleTime", (ArrayList<String>) null));
@@ -254,7 +240,7 @@ public class DecisionTreeActivity extends AppCompatActivity {
         atts.add(new Attribute("saler_name", (ArrayList<String>) null));
         atts.add(new Attribute("saler_scale", (ArrayList<String>) null));
         atts.add(new Attribute("category", (ArrayList<String>) null));
-//        atts.add(new Attribute("payback_policy", (ArrayList<String>) null));
+
 
 
         instances = new Instances("TestInstances", atts, products.size());
@@ -265,27 +251,19 @@ public class DecisionTreeActivity extends AppCompatActivity {
         for (Product product : products) {
             double[] instanceValue1 = new double[instances.numAttributes()];
 
-            instanceValue1[0] = instances.attribute(0).addStringValue(product.installment);
-            instanceValue1[1] = instances.attribute(1).addStringValue(product.current_price);
-            instanceValue1[2] = instances.attribute(2).addStringValue(product.percen_sale);
-            instanceValue1[3] = instances.attribute(3).addStringValue(product.saler.saler_rate);
-            instanceValue1[4] = instances.attribute(4).addStringValue(product.saler.getSalerSalingTime());
-            instanceValue1[5] = instances.attribute(5).addStringValue(product.getWarranty());
-            instanceValue1[6] = instances.attribute(6).addStringValue(product.productRating.overall_rate);
-            instanceValue1[7] = instances.attribute(7).addStringValue(product.brand);
-            instanceValue1[8] = instances.attribute(8).addStringValue(product.saler.saler_name);
-            instanceValue1[9] = instances.attribute(9).addStringValue("" + product.saler.saler_scale);
-            instanceValue1[10] = instances.attribute(10).addStringValue("" + product.category);
-//            instanceValue1[11] = instances.attribute(11).addStringValue("" + product.payback_policy);
+            instanceValue1[0] = instances.attribute(0).addStringValue(product.percen_sale);
+            instanceValue1[1] = instances.attribute(1).addStringValue(product.saler.saler_rate);
+            instanceValue1[2] = instances.attribute(2).addStringValue(product.saler.getSalerSalingTime());
+            instanceValue1[3] = instances.attribute(3).addStringValue(product.getWarranty());
+            instanceValue1[4] = instances.attribute(4).addStringValue(product.productRating.overall_rate);
+            instanceValue1[5] = instances.attribute(5).addStringValue(product.brand);
+            instanceValue1[6] = instances.attribute(6).addStringValue(product.saler.saler_name);
+            instanceValue1[7] = instances.attribute(7).addStringValue("" + product.saler.saler_scale);
+            instanceValue1[8] = instances.attribute(8).addStringValue("" + product.category);
 
 
             instances.add(new DenseInstance(1.0, instanceValue1));
         }
-
-        System.out.println("After adding any instance");
-        System.out.println("--------------------------");
-        System.out.println(instances);
-        System.out.println("--------------------------");
     }
 
     public byte[] createDotGraph(String dotFormat) {
