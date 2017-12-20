@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import java.util.ArrayList;
 
 import us.originally.lazadacrawler.activities.AlgorithmActivity;
+import us.originally.lazadacrawler.activities.ClusterActivity;
 import us.originally.lazadacrawler.activities.CrawlResultActivity;
 import us.originally.lazadacrawler.activities.DecisionTreeActivity;
 import us.originally.lazadacrawler.custom.RippleView;
@@ -72,7 +73,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private RippleView rvPaste;
     private SwipeButton btnRun;
     private SwipeButton btnRunDecision;
+    private SwipeButton btnCluster;
     private Button btnData;
+    private LinearLayout grpRun;
 
     private int translateY;
     private ArrayList<String> detailUrls;
@@ -94,6 +97,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     public void run() {
                         btnRun.setText(getResources().getString(R.string.run_apriori, links.size()));
                         btnRunDecision.setText(getResources().getString(R.string.run_decision, links.size()));
+                        btnCluster.setText(getResources().getString(R.string.run_cluster, links.size()));
                     }
                 });
             }
@@ -122,6 +126,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         crawler = new WebCrawler(this, mCallback);
         autoPasteIfValid();
+
     }
 
     private void initUI() {
@@ -141,6 +146,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvInputtedUrl = findViewById(R.id.tv_inputted_url);
         tvUrlText = findViewById(R.id.tv_url_text);
         tvUrlText.setVisibility(View.INVISIBLE);
+        grpRun = findViewById(R.id.grpRun);
 
         btnData = findViewById(R.id.btn_view_data);
         btnData.setOnClickListener(new View.OnClickListener() {
@@ -166,6 +172,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
+        btnCluster = findViewById(R.id.btn_run_cluster);
+        btnCluster.setOnActiveListener(new OnActiveListener() {
+            @Override
+            public void onActive() {
+                startActivity(new Intent(MainActivity.this, ClusterActivity.class));
+            }
+
+        });
         urlInputView.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -354,6 +368,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void btnRunDisabled() {
+        grpRun.setVisibility(View.GONE);
         btnRun.setText(getResources().getString(R.string.run_apriori, 0));
         btnRun.setEnabled(false);
         btnRun.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
@@ -366,9 +381,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRunDecision.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
         btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
         btnRunDecision.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+
+        btnCluster.setText(getResources().getString(R.string.run_cluster, 0));
+        btnCluster.setEnabled(false);
+        btnCluster.setButtonBackground(getResources().getDrawable(R.drawable.shape_button_disable));
+        btnCluster.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
+        btnCluster.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_disable));
     }
 
     public void btnRunEnabled() {
+        grpRun.setVisibility(View.VISIBLE);
         btnRun.setEnabled(true);
         btnRun.setButtonBackground(getResources().getDrawable(R.drawable.shape_button));
         btnRun.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
@@ -380,6 +402,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnRunDecision.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
         btnRunDecision.setText(getResources().getString(R.string.run_decision, detailUrls.size()));
         btnRunDecision.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_done));
+
+        btnCluster.setEnabled(true);
+        btnCluster.setButtonBackground(getResources().getDrawable(R.drawable.shape_button));
+        btnCluster.setDisabledDrawable(getResources().getDrawable(R.drawable.ic_code));
+        btnCluster.setText(getResources().getString(R.string.run_cluster, detailUrls.size()));
+        btnCluster.setEnabledDrawable(getResources().getDrawable(R.drawable.ic_done));
     }
 
     private Handler handler = new Handler() {
