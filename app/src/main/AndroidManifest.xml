@@ -28,9 +28,12 @@
         <activity android:name=".activities.AlgorithmActivity" />
         <activity android:name=".activities.DecisionTreeActivity" />
         <activity android:name=".activities.CrawlResultActivity" />
-        <activity android:name=".activities.BrowserActivity"
-            android:screenOrientation="sensorLandscape">
-        </activity>
+        <activity
+            android:name=".activities.ClusterActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+        <activity
+            android:name=".activities.BrowserActivity"
+            android:screenOrientation="sensorLandscape" />
         <activity
             android:name=".activities.ProductDetailActivity"
             android:excludeFromRecents="true"
